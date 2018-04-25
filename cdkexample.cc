@@ -8,14 +8,40 @@
 
 #include <iostream>
 #include "cdk.h"
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <stdint.h>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <string.h>
 
-
-#define MATRIX_WIDTH 4
-#define MATRIX_HEIGHT 3
-#define BOX_WIDTH 15
-#define MATRIX_NAME_STRING "Test Matrix"
+const int maxRecordStringLength = 25;
+#define MATRIX_WIDTH 3
+#define MATRIX_HEIGHT 5
+#define BOX_WIDTH 25
+#define MATRIX_NAME_STRING "Binary File Contents"
 
 using namespace std;
+// Class for BinaryFileHeader
+class BinaryFileHeader
+{
+public:
+
+
+  uint32_t magicNumber; /* Should be 0xFEEDFACE */
+  uint32_t versionNumber;
+  uint64_t numRecords;
+};
+
+// Class for BinaryFileRecord
+class BinaryFileRecord
+{
+public:
+  uint8_t strLength;
+  char stringBuffer[maxRecordStringLength];
+};
 
 
 int main()
@@ -33,8 +59,8 @@ int main()
   // values you choose to set for MATRIX_WIDTH and MATRIX_HEIGHT
   // above.
 
-  const char 		*rowTitles[] = {"R0", "R1", "R2", "R3", "R4", "R5"};
-  const char 		*columnTitles[] = {"C0", "C1", "C2", "C3", "C4", "C5"};
+  const char 		*rowTitles[] = {"R0", "a", "b", "c", "d", "e"};
+  const char 		*columnTitles[] = {"C0", "a", "b", "c"};
   int		boxWidths[] = {BOX_WIDTH, BOX_WIDTH, BOX_WIDTH, BOX_WIDTH, BOX_WIDTH, BOX_WIDTH};
   int		boxTypes[] = {vMIXED, vMIXED, vMIXED, vMIXED,  vMIXED,  vMIXED};
 
@@ -68,13 +94,69 @@ int main()
   /*
    * Dipslay a message
    */
-  setCDKMatrixCell(myMatrix, 2, 2, "Test Message");
-  drawCDKMatrix(myMatrix, true);    /* required  */
 
-  /* So we can see results, pause until a key is pressed. */
-  unsigned char x;
-  cin >> x;
+  //
+  // This is where code is modified
+  //Initialize objects
+  BinaryFileHeader *myHeader = new BinaryFileHeader();
+  BinaryFileRecord *myRecord = new BinaryFileRecord();
+  // Initialize if stream reader
+  ifstream binInfile ("cs3377.bin", ios::in | ios::binary);
+  // Read the file
+  binInfile.read((char *) myHeader, sizeof(BinaryFileHeader));
+  // Get the magic number
+  uint32_t magic = myHeader ->magicNumber;
+  uint32_t  num_record = myHeader ->numRecords;
+  // Initialize stream objects
+  stringstream stream;
+  stream << hex << magic;
+  // Store it in sresult
+  string result( stream.str() );
+  // Transform to upper case
+  transform(result.begin(), result.end(), result.begin(),:: toupper);
+  // C;ear the string stream
+  stream.str("");
+  stream.clear();
+  stream << myHeader ->versionNumber;
+  string versions(stream.str());
+  versions = "Version Number : " + versions;
+  // Another string stream object
+  stringstream s3;
+  s3 << myHeader ->numRecords;
+  string rec(s3.str());
+  rec = "NumRecords : " + rec;
+  result = "Magic : 0x" + result;
+  // Set the matrix 
+  setCDKMatrixCell(myMatrix, 1, 1, result.c_str());
+  setCDKMatrixCell(myMatrix, 1 , 2,versions.c_str());
+  setCDKMatrixCell(myMatrix, 1 , 3,rec.c_str());
+  // Set versions and everything inside matrix and the records
+  for(uint32_t i=2; i <= num_record+1 ; i ++)
+    {
+      binInfile.read((char *) myRecord ,sizeof(BinaryFileRecord));
+      int st_len = strlen((char *) myRecord ->stringBuffer);
+      s3.str("");
+      s3.clear();
+      s3 << st_len;
+      string num_rec(s3.str());
+      num_rec = "strlen: " + num_rec;
+      setCDKMatrixCell(myMatrix, i, 1, num_rec.c_str());
+      setCDKMatrixCell(myMatrix, i, 2, myRecord -> stringBuffer);
+      //cout <<endl<<st_len;
+      //cout <<myRecord ->stringBuffer;
+    }
+   binInfile.close();
+   drawCDKMatrix(myMatrix, true);
+   unsigned char x;
+   cin >> x;
+
+
+
+
+
+  //
+
 
   // Cleanup screen
-  endCDK();
+    endCDK();
 }
