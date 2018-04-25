@@ -1,9 +1,15 @@
 /*
  * Usage of CDK Matrix
  *
+<<<<<<< HEAD
  * File:   example1.cc
  * Author: Tanuj Tiwari
  * Email:  tanuj.tiwari@utdallas.edu
+=======
+ * F
+ * Tanuj Tiwari
+ * Email: tanuj.tiwari@utdallas.edu
+>>>>>>> master
  */
 
 #include <iostream>
